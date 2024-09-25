@@ -40,9 +40,17 @@ In the case of filling up a column, we need to create another column marking tha
 
 Some categorical data is ordinal, meaning it has some sort of order. Size is an example of this. We already know that at the end of this data prep everything needs to be numerical. So if the data is ordinal, we need to convert it to numerical, and keep the ordering of the data.
 
+| Aspect | Ordinal Data | Nominal Data |
+| --- | --- | --- |
+| Order | Has meaningful order | No intrinsic order |
+| Example | Education levels (High school, Bachelor's, Master's) | Hair color (Blonde, Brown, Black) |
+| Mathematical operations | Limited (median, mode) | Very limited (mode only) |
+| Ranking | Can be ranked | Cannot be ranked |
+
 #### Processing
 
 1. Expand date columns into more columns, such as month (1-12), holiday (bool), day of week (1-7), weekend (bool).
 2. Fill missing values with median and create a new column to mark the event (bool).
 3. Convert ordinal data to numerical, but keeping the order
 4. Convert non ordinal data to numerical.
+5. Store in an SQL lite database.
