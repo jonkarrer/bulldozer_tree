@@ -1,7 +1,5 @@
-use std::{collections::HashMap, fs::File, iter::Rev};
-
-use mode::mode;
 use polars::prelude::*;
+use std::fs::File;
 
 struct CsvRecord {
     pub sales_id: Option<String>,
@@ -115,26 +113,76 @@ pub fn init_data_frame(path: &str) -> anyhow::Result<DataFrame> {
         .finish()?)
 }
 
-pub fn drop_nulls(df: &DataFrame) -> LazyFrame {
-    df.clone().lazy().drop_nulls(None)
-}
-
-pub fn fill_null_with_mode(df: &DataFrame, col_name: &str) -> Result<DataFrame, PolarsError> {
+pub fn nominal_encoding(column_name: &str, df: &DataFrame) -> Result<DataFrame, PolarsError> {
     df.clone()
         .lazy()
-        .with_column(col(col_name).fill_null(col(col_name).drop_nulls().mode()))
+        .with_column(
+            col(column_name).cast(DataType::Categorical(None, CategoricalOrdering::Lexical)),
+        )
         .collect()
 }
 
-pub fn get_unique_values(df: &DataFrame, column_name: &str) -> Series {
-    df.column(column_name).unwrap().unique().unwrap()
+pub fn date_part(column_name: &str, df: DataFrame) -> Result<DataFrame, PolarsError> {
+    let parsed_col_name = format!("{}_parsed", column_name);
+    let year = format!("{}_year", column_name);
+    let month = format!("{}_month", column_name);
+    let weekday = format!("{}_weekday", column_name);
+    let day = format!("{}_day", column_name);
+
+    let expressions: Vec<Expr> = vec![
+        col(&parsed_col_name).dt().year().alias(year),
+        col(&parsed_col_name).dt().month().alias(month),
+        col(&parsed_col_name).dt().weekday().alias(weekday),
+        col(&parsed_col_name).dt().day().alias(day),
+    ];
+
+    let df = df
+        .lazy()
+        .with_column(
+            col(column_name)
+                .str()
+                .strptime(
+                    DataType::Date,
+                    StrptimeOptions {
+                        format: Some("%m/%d/%Y %H:%M".into()),
+                        ..Default::default()
+                    },
+                    lit("raise"),
+                )
+                .alias(&parsed_col_name),
+        )
+        .collect()?;
+
+    Ok(df.lazy().with_columns(expressions).collect()?)
 }
 
-pub fn categorical_encoding(column_name: &str, df: &DataFrame) -> Result<DataFrame, PolarsError> {
-    df.clone()
-        .lazy()
-        .select([col(column_name).cast(DataType::Categorical(None, CategoricalOrdering::Lexical))])
-        .collect()
+pub fn fill_null_values(df: DataFrame) -> Result<DataFrame, PolarsError> {
+    let col_names = df.get_column_names_str();
+
+    let expressions: Vec<Expr> = col_names
+        .into_iter()
+        .map(|col_name| {
+            let dtype = df.column(col_name).unwrap().dtype().clone();
+
+            match dtype {
+                DataType::Int32 | DataType::Int64 | DataType::Int16 | DataType::Int8 => {
+                    col(col_name).fill_null(col(col_name).drop_nulls().mean())
+                }
+                DataType::Float32 | DataType::Float64 => {
+                    col(col_name).fill_null(col(col_name).drop_nulls().mean())
+                }
+                DataType::UInt8 | DataType::UInt16 | DataType::UInt32 | DataType::UInt64 => {
+                    col(col_name).fill_null(col(col_name).drop_nulls().mean())
+                }
+                DataType::String | DataType::Boolean | DataType::Categorical(_, _) => {
+                    col(col_name).fill_null(col(col_name).drop_nulls().mode())
+                }
+                _ => col(col_name),
+            }
+        })
+        .collect();
+
+    Ok(df.lazy().with_columns(expressions).collect()?)
 }
 
 pub fn write_to_csv(df: &mut DataFrame) -> anyhow::Result<()> {
