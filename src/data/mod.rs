@@ -1,20 +1,13 @@
 use polars::prelude::*;
 use std::fs::File;
 
-pub const NOMINAL_COLUMNS: [&str; 39] = [
+pub const NOMINAL_COLUMNS: [&str; 38] = [
     "MachineID",
     "ModelID",
     "datasource",
     "auctioneerID",
-    "fiModelDesc",
-    "fiBaseModel",
-    "fiSecondaryDesc",
-    "fiModelSeries",
-    "fiModelDescriptor",
-    "fiProductClassDesc",
     "state",
     "ProductGroup",
-    "ProductGroupDesc",
     "Drive_System",
     "Enclosure",
     "Forks",
@@ -41,6 +34,24 @@ pub const NOMINAL_COLUMNS: [&str; 39] = [
     "Travel_Controls",
     "Differential_Type",
     "Steering_Controls",
+    "Turbocharged",
+    "Tire_Size",
+    "Blade_Width",
+    "Stick_Length",
+    "Grouser_Tracks",
+    "Undercarriage_Pad_Width",
+];
+
+pub const ORDINAL_COLUMNS: [&str; 2] = ["UsageBand", "ProductSize"];
+
+pub const COLUMNS_TO_DROP: [&str; 7] = [
+    "fiModelDesc",
+    "fiBaseModel",
+    "fiSecondaryDesc",
+    "fiModelSeries",
+    "fiModelDescriptor",
+    "fiProductClassDesc",
+    "ProductGroupDesc",
 ];
 
 struct CsvRecord {
@@ -205,8 +216,34 @@ pub fn date_part(column_name: &str, df: DataFrame) -> Result<DataFrame, PolarsEr
         )
         .collect()?;
 
-    df.lazy().with_columns(expressions).collect()
+    let df = df.lazy().with_columns(expressions).collect()?;
+    let df = df.drop_many([column_name, &parsed_col_name]);
+
+    Ok(df)
 }
+
+pub fn drop_descriptions(columns: Vec<&str>, df: DataFrame) -> DataFrame {
+    df.drop_many(columns)
+}
+
+// pub fn ordinal_encoding(columns: &[&str], ordering: >, df: DataFrame) -> Result<DataFrame, PolarsError> {
+//     let expressions: Vec<Expr> = columns
+//         .into_iter()
+//         .map(|col_name| {
+//             let dype = df.column(col_name).unwrap().dtype();
+//             let col_name = col_name.to_string();
+
+//             match dype {
+//                 DataType::String => col(col_name)
+//                     .cast(DataType::Enum((), ()))
+//                     .to_physical(),
+//                 _ => col(col_name),
+//             }
+//         })
+//         .collect();
+
+//     df.lazy().with_columns(expressions).collect()
+// }
 
 pub fn fill_null_values(df: DataFrame) -> Result<DataFrame, PolarsError> {
     let col_names = df.get_column_names_str();
@@ -218,13 +255,13 @@ pub fn fill_null_values(df: DataFrame) -> Result<DataFrame, PolarsError> {
 
             match dtype {
                 DataType::Int32 | DataType::Int64 | DataType::Int16 | DataType::Int8 => {
-                    col(col_name).fill_null(col(col_name).drop_nulls().mean())
+                    col(col_name).fill_null(col(col_name).drop_nulls().median())
                 }
                 DataType::Float32 | DataType::Float64 => {
-                    col(col_name).fill_null(col(col_name).drop_nulls().mean())
+                    col(col_name).fill_null(col(col_name).drop_nulls().median())
                 }
                 DataType::UInt8 | DataType::UInt16 | DataType::UInt32 | DataType::UInt64 => {
-                    col(col_name).fill_null(col(col_name).drop_nulls().mean())
+                    col(col_name).fill_null(col(col_name).drop_nulls().median())
                 }
                 DataType::String | DataType::Boolean | DataType::Categorical(_, _) => {
                     col(col_name).fill_null(col(col_name).drop_nulls().mode())

@@ -51,6 +51,7 @@ Some categorical data is ordinal, meaning it has some sort of order. Size is an 
 
 1. Expand date columns into more columns, such as month (1-12), holiday (bool), day of week (1-7), weekend (bool).
 2. Fill missing values with median and create a new column to mark the event (bool).
-3. Convert ordinal data to numerical, but keeping the order
-4. Convert non ordinal data to numerical.
-5. Store in an SQL lite database.
+3. Remove descriptive columns
+4. Convert category to ordinal
+5. Convert non ordinal data to numerical.
+6. Store in an SQL lite database.
