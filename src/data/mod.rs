@@ -1,6 +1,48 @@
 use polars::prelude::*;
 use std::fs::File;
 
+pub const NOMINAL_COLUMNS: [&str; 39] = [
+    "MachineID",
+    "ModelID",
+    "datasource",
+    "auctioneerID",
+    "fiModelDesc",
+    "fiBaseModel",
+    "fiSecondaryDesc",
+    "fiModelSeries",
+    "fiModelDescriptor",
+    "fiProductClassDesc",
+    "state",
+    "ProductGroup",
+    "ProductGroupDesc",
+    "Drive_System",
+    "Enclosure",
+    "Forks",
+    "Pad_Type",
+    "Ride_Control",
+    "Stick",
+    "Transmission",
+    "Blade_Extension",
+    "Enclosure_Type",
+    "Hydraulics",
+    "Pushblock",
+    "Ripper",
+    "Scarifier",
+    "Tip_Control",
+    "Coupler",
+    "Coupler_System",
+    "Hydraulics_Flow",
+    "Track_Type",
+    "Thumb",
+    "Pattern_Changer",
+    "Grouser_Type",
+    "Backhoe_Mounting",
+    "Blade_Type",
+    "Travel_Controls",
+    "Differential_Type",
+    "Steering_Controls",
+];
+
 struct CsvRecord {
     pub sales_id: Option<String>,
     pub machine_id: Option<String>,
@@ -113,13 +155,23 @@ pub fn init_data_frame(path: &str) -> anyhow::Result<DataFrame> {
         .finish()?)
 }
 
-pub fn nominal_encoding(column_name: &str, df: &DataFrame) -> Result<DataFrame, PolarsError> {
-    df.clone()
-        .lazy()
-        .with_column(
-            col(column_name).cast(DataType::Categorical(None, CategoricalOrdering::Lexical)),
-        )
-        .collect()
+pub fn nominal_encoding(columns: &[&str], df: DataFrame) -> Result<DataFrame, PolarsError> {
+    let expressions: Vec<Expr> = columns
+        .into_iter()
+        .map(|col_name| {
+            let dype = df.column(col_name).unwrap().dtype();
+            let col_name = col_name.to_string();
+
+            match dype {
+                DataType::String => col(col_name)
+                    .cast(DataType::Categorical(None, CategoricalOrdering::Physical))
+                    .to_physical(),
+                _ => col(col_name),
+            }
+        })
+        .collect();
+
+    df.lazy().with_columns(expressions).collect()
 }
 
 pub fn date_part(column_name: &str, df: DataFrame) -> Result<DataFrame, PolarsError> {
@@ -153,7 +205,7 @@ pub fn date_part(column_name: &str, df: DataFrame) -> Result<DataFrame, PolarsEr
         )
         .collect()?;
 
-    Ok(df.lazy().with_columns(expressions).collect()?)
+    df.lazy().with_columns(expressions).collect()
 }
 
 pub fn fill_null_values(df: DataFrame) -> Result<DataFrame, PolarsError> {
@@ -182,7 +234,7 @@ pub fn fill_null_values(df: DataFrame) -> Result<DataFrame, PolarsError> {
         })
         .collect();
 
-    Ok(df.lazy().with_columns(expressions).collect()?)
+    df.lazy().with_columns(expressions).collect()
 }
 
 pub fn write_to_csv(df: &mut DataFrame) -> anyhow::Result<()> {
