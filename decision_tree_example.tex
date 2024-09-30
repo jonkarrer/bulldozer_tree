@@ -1,0 +1,93 @@
+
+\documentclass[margin=10pt]{standalone}
+\usepackage{tikz,forest}
+\usetikzlibrary{arrows.meta}
+\forestset{
+default preamble={
+before typesetting nodes={
+  !r.replace by={[, coordinate, append]}
+},  
+where n children=0{
+  tier=word,
+}{  
+  %diamond, aspect=2,
+},  
+where level=0{}{
+  if n=1{
+    edge label={node[pos=.2, above] {Y}},
+  }{  
+    edge label={node[pos=.2, above] {N}},
+  }   
+},  
+for tree={
+  edge+={thick, -Latex},
+  s sep'+=2cm,
+  draw,
+  thick,
+  edge path'={ (!u) -| (.parent)},
+  align=center,
+}   
+}
+}\begin{document}\begin{forest}[Val($7$) $ \leq 0.50$ \\ Imp. $0.00$
+	[Val($11$) $ \leq 0.50$ \\ Imp. $0.00$
+		[Val($1$) $ \leq 5436.50$ \\ Imp. $0.00$
+			[Val($1$) $ \leq 90.50$ \\ Imp. $0.00$
+				[Label: 26000]
+				[Val($1$) $ \leq 3523.50$ \\ Imp. $0.00$
+					[Label: 35000]
+					[Label: 26000]]]
+			[Val($1$) $ \leq 10895.50$ \\ Imp. $0.00$
+				[Val($1$) $ \leq 6721.50$ \\ Imp. $0.00$
+					[Label: 25000]
+					[Label: 20000]]
+				[Val($1$) $ \leq 96895.00$ \\ Imp. $0.03$
+					[Label: 21000]
+					[Label: 24000]]]]
+		[Val($0$) $ \leq 1998.50$ \\ Imp. $0.00$
+			[Val($0$) $ \leq 1970.50$ \\ Imp. $0.00$
+				[Val($1$) $ \leq 46.50$ \\ Imp. $0.00$
+					[Label: 25000]
+					[Label: 40000]]
+				[Val($0$) $ \leq 1986.50$ \\ Imp. $0.00$
+					[Label: 40000]
+					[Label: 30000]]]
+			[Val($21$) $ \leq 0.50$ \\ Imp. $0.00$
+				[Val($1$) $ \leq 6840.50$ \\ Imp. $0.00$
+					[Label: 125000]
+					[Label: 102500]]
+				[Label: 65000]]]]
+	[Val($5$) $ \leq 1.50$ \\ Imp. $0.00$
+		[Val($5$) $ \leq 0.50$ \\ Imp. $0.01$
+			[Val($0$) $ \leq 1979.50$ \\ Imp. $0.00$
+				[Val($0$) $ \leq 1967.50$ \\ Imp. $0.00$
+					[Label: 10000]
+					[Label: 15000]]
+				[Val($3$) $ \leq 0.50$ \\ Imp. $0.00$
+					[Label: 40000]
+					[Label: 25000]]]
+			[Val($0$) $ \leq 2002.50$ \\ Imp. $0.00$
+				[Val($0$) $ \leq 1990.50$ \\ Imp. $0.00$
+					[Label: 7000]
+					[Label: 9000]]
+				[Val($39$) $ \leq 2006.50$ \\ Imp. $0.00$
+					[Label: 13000]
+					[Label: 11000]]]]
+		[Val($0$) $ \leq 1991.50$ \\ Imp. $0.00$
+			[Val($0$) $ \leq 1973.50$ \\ Imp. $0.00$
+				[Val($0$) $ \leq 1965.50$ \\ Imp. $0.00$
+					[Label: 9000]
+					[Label: 15000]]
+				[Val($12$) $ \leq 2.50$ \\ Imp. $0.00$
+					[Label: 15000]
+					[Label: 35000]]]
+			[Val($3$) $ \leq 2.50$ \\ Imp. $0.00$
+				[Label: 25000]
+				[Val($3$) $ \leq 3.50$ \\ Imp. $0.00$
+					[Label: 10000]
+					[Label: 90000]]]]]]
+\node [anchor=north west] at (current bounding box.north east) {%
+                \begin{tabular}{c c c}
+                  \multicolumn{3}{@{}l@{}}{Legend:}\\
+                  Imp.&:&Impurity decrease\\Var(7)&:&feature-7\\Var(5)&:&feature-5\\Var(0)&:&feature-0\\Var(3)&:&feature-3\\Var(12)&:&feature-12\\Var(39)&:&feature-39\\Var(11)&:&feature-11\\Var(21)&:&feature-21\\Var(1)&:&feature-1\\\end{tabular}};
+	\end{forest}
+\end{document}
